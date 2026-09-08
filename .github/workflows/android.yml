@@ -21,6 +21,10 @@ jobs:
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Xvfb (for real error output)
+        shell: bash
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
       - name: Install Android SDK packages
         shell: bash
         run: |
@@ -49,6 +53,7 @@ jobs:
           unzip -q templates.tpz -d /tmp/godot_templates
           cp -r /tmp/godot_templates/templates/* "$HOME/.local/share/godot/export_templates/4.5.1.stable/"
           test -f "$HOME/.local/share/godot/export_templates/4.5.1.stable/android_release.apk"
+          test -f "$HOME/.local/share/godot/export_templates/4.5.1.stable/android_debug.apk"
 
       - name: Configure Godot Android paths
         shell: bash
@@ -128,13 +133,13 @@ jobs:
 
       - name: Import project
         shell: bash
-        run: ./godot/godot --headless --editor --path . --import --quit
+        run: xvfb-run -a ./godot/godot --headless --editor --path . --import --quit
 
       - name: Validate Android export configuration
         shell: bash
         run: |
           set -e
-          ./godot/godot --headless --path . --export-debug Android build/schoolfemboy-runaway.apk --verbose
+          xvfb-run -a ./godot/godot --headless --path . --export-debug Android build/schoolfemboy-runaway.apk --verbose
 
       - name: Verify APK
         shell: bash

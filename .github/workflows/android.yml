@@ -85,7 +85,11 @@ jobs:
       - name: Create Android export preset
         shell: bash
         run: |
-          cat > export_presets.cfg <<'EOF_PRESET'
+          set -e
+          # Write the absolute keystore path. Godot does not expand $HOME
+          # when it is embedded literally in export_presets.cfg.
+          KEYSTORE_PATH="$HOME/schoolfemboy-release.keystore"
+          cat > export_presets.cfg <<EOF_PRESET
           [preset.0]
           name="Android"
           platform="Android"
@@ -105,7 +109,7 @@ jobs:
           package/unique_name="com.schoolfemboy.runaway"
           package/name="SchoolFemboy Runaway"
           package/signed=true
-          keystore/release="$HOME/schoolfemboy-release.keystore"
+          keystore/release="$KEYSTORE_PATH"
           keystore/release_user="schoolfemboy"
           keystore/release_password="android"
           package/app_category=2
@@ -117,6 +121,8 @@ jobs:
           architectures/x86=false
           architectures/x86_64=false
           EOF_PRESET
+          test -f export_presets.cfg
+          grep -F "keystore/release=\"$KEYSTORE_PATH\"" export_presets.cfg
 
       - name: Import project
         shell: bash

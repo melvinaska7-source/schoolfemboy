@@ -124,7 +124,7 @@ jobs:
           EOF_PRESET
           test -f export_presets.cfg
           grep -F 'package/signed=false' export_presets.cfg
-          grep -F 'keystore/debug="$HOME/debug.keystore"' export_presets.cfg
+          grep -F "keystore/debug=\"$HOME/debug.keystore\"" export_presets.cfg
 
       - name: Import project
         shell: bash

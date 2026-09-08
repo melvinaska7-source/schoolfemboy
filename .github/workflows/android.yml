@@ -68,27 +68,25 @@ jobs:
           # Some Godot CI setups still look for the non-minor filename.
           cp "$HOME/.config/godot/editor_settings-4.5.tres" "$HOME/.config/godot/editor_settings-4.tres"
 
-      - name: Create temporary release keystore
+      - name: Create Android debug keystore
         shell: bash
         run: |
           set -e
           keytool -genkeypair -v \
-            -keystore "$HOME/schoolfemboy-release.keystore" \
+            -keystore "$HOME/debug.keystore" \
             -storepass android \
             -keypass android \
-            -alias schoolfemboy \
+            -alias androiddebugkey \
             -keyalg RSA \
             -keysize 2048 \
             -validity 10000 \
-            -dname "CN=SchoolFemboy Runaway, OU=Dev, O=SchoolFemboy, L=Warsaw, ST=Mazovia, C=PL"
+            -dname "CN=Android Debug, OU=Android, O=Android, L=Unknown, ST=Unknown, C=US"
+          test -s "$HOME/debug.keystore"
 
       - name: Create Android export preset
         shell: bash
         run: |
           set -e
-          # Write the absolute keystore path. Godot does not expand $HOME
-          # when it is embedded literally in export_presets.cfg.
-          KEYSTORE_PATH="$HOME/schoolfemboy-release.keystore"
           cat > export_presets.cfg <<EOF_PRESET
           [preset.0]
           name="Android"
@@ -108,10 +106,13 @@ jobs:
           gradle_build/use_gradle_build=false
           package/unique_name="com.schoolfemboy.runaway"
           package/name="SchoolFemboy Runaway"
-          package/signed=true
-          keystore/release="$KEYSTORE_PATH"
-          keystore/release_user="schoolfemboy"
-          keystore/release_password="android"
+          package/signed=false
+          keystore/debug="$HOME/debug.keystore"
+          keystore/debug_user="androiddebugkey"
+          keystore/debug_password="android"
+          keystore/release=""
+          keystore/release_user=""
+          keystore/release_password=""
           package/app_category=2
           version/code=1
           version/name="0.1.0"
@@ -122,7 +123,8 @@ jobs:
           architectures/x86_64=false
           EOF_PRESET
           test -f export_presets.cfg
-          grep -F "keystore/release=\"$KEYSTORE_PATH\"" export_presets.cfg
+          grep -F 'package/signed=false' export_presets.cfg
+          grep -F 'keystore/debug="$HOME/debug.keystore"' export_presets.cfg
 
       - name: Import project
         shell: bash
@@ -132,7 +134,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          ./godot/godot --headless --path . --export-release Android build/schoolfemboy-runaway.apk --verbose
+          ./godot/godot --headless --path . --export-debug Android build/schoolfemboy-runaway.apk --verbose
 
       - name: Verify APK
         shell: bash

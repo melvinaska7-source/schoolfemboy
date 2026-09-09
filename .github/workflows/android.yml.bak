@@ -93,4 +93,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: schoolfemboy-runaway-apk
-          path: build/*.apk
+          path: build/

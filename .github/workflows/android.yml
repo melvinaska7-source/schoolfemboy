@@ -36,6 +36,9 @@ jobs:
           unzip -q templates.tpz -d /tmp/godot_templates
           cp -r /tmp/godot_templates/templates/* ~/.local/share/godot/export_templates/4.5.1.stable/
 
+      - name: Create build directory
+        run: mkdir -p build
+
       - name: Create Android export preset
         run: |
           cat > export_presets.cfg <<'EOF'
@@ -73,24 +76,16 @@ jobs:
 
       - name: Export APK
         run: |
-          ./godot/godot --headless --path . --export-release Android schoolfemboy-runaway.apk 2>&1 | tee export.log
+          ./godot/godot --headless --path . --export-release Android build/schoolfemboy-runaway.apk 2>&1 | tee export.log
           cat export.log
           echo "=== Looking for APK ==="
           find . -name "*.apk" -type f -ls
-          mkdir -p build
-          mv *.apk build/ || echo "No APK found to move"
+          echo "=== Build directory contents ==="
           ls -lah build/
-
-      - name: Find APK
-        run: |
-          echo "Searching for APK files..."
-          find . -name "*.apk" -type f
-          echo "Contents of build directory:"
-          ls -la build/ || echo "Build directory not found"
 
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: schoolfemboy-runaway-apk
-          path: build/
+          path: build/*.apk

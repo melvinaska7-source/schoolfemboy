@@ -75,7 +75,14 @@ jobs:
         run: |
           mkdir -p build
           ./godot/godot --headless --path . --export-release Android build/schoolfemboy-runaway.apk 2>&1 | tee export.log
+          echo "=== EXPORT LOG ==="
           cat export.log
+          echo "=== FIND ALL APK FILES ==="
+          find . -name "*.apk" -type f -ls
+          echo "=== BUILD DIRECTORY CONTENTS ==="
+          ls -lah build/
+          echo "=== PROJECT ROOT CONTENTS ==="
+          ls -lah | head -20
 
       - name: Find APK
         run: |

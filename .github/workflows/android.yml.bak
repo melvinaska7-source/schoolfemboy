@@ -11,19 +11,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build with Godot
-        uses: abarichello/godot-export@master
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          godot_version: 4.5.1
-          project_path: ./
-          export_path: ./build/app.apk
+          distribution: temurin
+          java-version: '17'
+
+      - name: Export to Android
+        uses: firebelley/godot-export@v5.2.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_export_templates.tpz
+          relative_project_path: ./
           export_debug: false
-          export_filter: Android
-          relative_export_path: ./build/
+          cache: true
 
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: schoolfemboy-runaway-apk
-          path: ./build/app.apk
+          path: build/

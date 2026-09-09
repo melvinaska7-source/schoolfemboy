@@ -119,7 +119,20 @@ func start_litrichka_capture():
 
 func spawn_circle():
     if not capture_active or capture_type!="Литричка": return
-    var b=Button.new(); b.text=""; b.custom_minimum_size=Vector2(75,75); b.position=Vector2(rng.randi_range(120,1100),rng.randi_range(100,570)); b.modulate=Color(1,0.15,0.15,0.9); hud.add_child(b); b.pressed.connect(func(): b.queue_free(); circles_left-=1; if circles_left>0: spawn_circle(); else: escape_litrichka())
+    var b=Button.new()
+    b.text=""
+    b.custom_minimum_size=Vector2(75,75)
+    b.position=Vector2(rng.randi_range(120,1100),rng.randi_range(100,570))
+    b.modulate=Color(1,0.15,0.15,0.9)
+    hud.add_child(b)
+    b.pressed.connect(func():
+        b.queue_free()
+        circles_left-=1
+        if circles_left>0:
+            spawn_circle()
+        else:
+            escape_litrichka()
+    )
 
 func escape_litrichka():
     capture_active=false; prompt_label.hide(); player.freeze_controls(false); chase_enemy=null; andro_used=true

@@ -1,0 +1,182 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-22.04
+
+    steps:
+      # 1. Забираем проект
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Java
+      - name: Install Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # 3. Android SDK
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android packages
+        run: |
+          yes | sdkmanager --licenses || true
+
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
+
+      # 4. Xvfb — нужен Godot для запуска без настоящего экрана
+      - name: Install Xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb unzip wget
+
+      # 5. Godot
+      - name: Install Godot 4.5.1
+        run: |
+          wget -q \
+            https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_linux.x86_64.zip \
+            -O godot.zip
+
+          unzip -q godot.zip
+
+          mkdir -p godot
+          mv Godot_v4.5.1-stable_linux.x86_64 godot/godot
+
+          chmod +x godot/godot
+
+      # 6. Godot Android templates
+      - name: Install Godot export templates
+        run: |
+          wget -q \
+            https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_export_templates.tpz \
+            -O templates.tpz
+
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.5.1.stable"
+
+          unzip -q templates.tpz -d /tmp/godot_templates
+
+          cp -r \
+            /tmp/godot_templates/templates/* \
+            "$HOME/.local/share/godot/export_templates/4.5.1.stable/"
+
+      # 7. Настраиваем Godot
+      - name: Configure Godot
+        run: |
+          mkdir -p "$HOME/.config/godot"
+
+          cat > "$HOME/.config/godot/editor_settings-4.5.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+
+          export/android/java_sdk_path = "$JAVA_HOME"
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          EOF
+
+      # 8. Создаём debug-ключ
+      - name: Create debug keystore
+        run: |
+          keytool -genkeypair \
+            -v \
+            -keystore "$HOME/debug.keystore" \
+            -storepass android \
+            -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug, OU=Android, O=Android, C=US"
+
+      # 9. Создаём настройки Android-экспорта
+      - name: Create export preset
+        run: |
+          cat > export_presets.cfg <<EOF
+          [preset.0]
+
+          name="Android"
+          platform="Android"
+          runnable=true
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="build/schoolfemboy-runaway.apk"
+
+          [preset.0.options]
+
+          custom_template/debug=""
+          custom_template/release=""
+
+          package/unique_name="com.schoolfemboy.runaway"
+          package/name="SchoolFemboy Runaway"
+
+          package/signed=true
+
+          keystore/debug="$HOME/debug.keystore"
+          keystore/debug_user="androiddebugkey"
+          keystore/debug_password="android"
+
+          keystore/release=""
+          keystore/release_user=""
+          keystore/release_password=""
+
+          version/code=1
+          version/name="0.1.0"
+
+          screen/orientation=1
+
+          architectures/arm64-v8a=true
+          architectures/armeabi-v7a=false
+          architectures/x86=false
+          architectures/x86_64=false
+          EOF
+
+      # 10. Импортируем проект
+      - name: Import Godot project
+        run: |
+          xvfb-run -a \
+            ./godot/godot \
+            --headless \
+            --editor \
+            --path . \
+            --import \
+            --quit
+
+      # 11. Собираем APK
+      - name: Build APK
+        run: |
+          mkdir -p build
+
+          xvfb-run -a \
+            ./godot/godot \
+            --headless \
+            --path . \
+            --export-debug \
+            Android \
+            build/schoolfemboy-runaway.apk
+
+      # 12. Проверяем APK
+      - name: Check APK
+        run: |
+          test -s build/schoolfemboy-runaway.apk
+          ls -lh build/schoolfemboy-runaway.apk
+
+      # 13. Выдаём APK как Artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolfemboy-runaway-apk
+          path: build/schoolfemboy-runaway.apk

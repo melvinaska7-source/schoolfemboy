@@ -62,7 +62,9 @@ jobs:
       
       - run: ./Godot_v4.5.1-stable_linux.x86_64 --headless --editor --path . --quit
       
-      - run: mkdir -p build && ./Godot_v4.5.1-stable_linux.x86_64 --headless --path . --export-release Android build/app.apk
+      - run: |
+          mkdir -p build
+          ./Godot_v4.5.1-stable_linux.x86_64 --headless --path . --export-release "Android" "build/app.apk" 2>&1
       
       - uses: actions/upload-artifact@v4
         with:

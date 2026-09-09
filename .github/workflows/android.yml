@@ -73,16 +73,13 @@ jobs:
 
       - name: Export APK
         run: |
-          mkdir -p build
-          ./godot/godot --headless --path . --export-release Android build/schoolfemboy-runaway.apk 2>&1 | tee export.log
-          echo "=== EXPORT LOG ==="
+          ./godot/godot --headless --path . --export-release Android schoolfemboy-runaway.apk 2>&1 | tee export.log
           cat export.log
-          echo "=== FIND ALL APK FILES ==="
+          echo "=== Looking for APK ==="
           find . -name "*.apk" -type f -ls
-          echo "=== BUILD DIRECTORY CONTENTS ==="
+          mkdir -p build
+          mv *.apk build/ || echo "No APK found to move"
           ls -lah build/
-          echo "=== PROJECT ROOT CONTENTS ==="
-          ls -lah | head -20
 
       - name: Find APK
         run: |
@@ -96,4 +93,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: schoolfemboy-runaway-apk
-          path: build/*.apk
+          path: build/

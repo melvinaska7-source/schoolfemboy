@@ -73,9 +73,13 @@ jobs:
 
       - name: Export APK
         run: |
-          mkdir -p build
-          ./godot/godot --headless --path . --export-release Android build/schoolfemboy-runaway.apk 2>&1 | tee export.log
+          ./godot/godot --headless --path . --export-release Android schoolfemboy-runaway.apk 2>&1 | tee export.log
           cat export.log
+          echo "=== Looking for APK ==="
+          find . -name "*.apk" -type f -ls
+          mkdir -p build
+          mv *.apk build/ || echo "No APK found to move"
+          ls -lah build/
 
       - name: Find APK
         run: |

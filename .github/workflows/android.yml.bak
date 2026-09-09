@@ -76,16 +76,41 @@ jobs:
 
       - name: Export APK
         run: |
+          echo "Starting export..."
           ./godot/godot --headless --path . --export-release Android build/schoolfemboy-runaway.apk 2>&1 | tee export.log
+          EXPORT_STATUS=$?
+          echo "Export status code: $EXPORT_STATUS"
+          echo ""
+          echo "=== EXPORT LOG ==="
           cat export.log
-          echo "=== Looking for APK ==="
-          find . -name "*.apk" -type f -ls
-          echo "=== Build directory contents ==="
+          echo ""
+          echo "=== BUILD DIRECTORY ==="
           ls -lah build/
+          echo ""
+          echo "=== FIND ALL APK ==="
+          find . -name "*.apk"
+          echo ""
+          echo "=== CHECK IF APK EXISTS ==="
+          if [ -f build/schoolfemboy-runaway.apk ]; then
+            echo "✅ APK FOUND!"
+            file build/schoolfemboy-runaway.apk
+            ls -lah build/schoolfemboy-runaway.apk
+          else
+            echo "❌ APK NOT FOUND"
+          fi
 
-      - name: Upload APK
-        if: success()
+      - name: Debug - Upload build directory
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: schoolfemboy-runaway-apk
-          path: build/*.apk
+          name: debug-build-directory
+          path: build/
+          if-no-files-found: ignore
+
+      - name: Debug - Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs
+          path: "*.log"
+          if-no-files-found: ignore
